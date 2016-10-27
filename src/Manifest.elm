@@ -2,51 +2,147 @@ module Manifest exposing (..)
 
 import Combine exposing (Parser)
 import Combine.Char as CChar
+import Combine.Infix exposing ((<*>), (<*), (*>), (<$>), (<$), (<?>))
 import Combine.Num as CNum
-import CombinePipeline exposing (start, consume, ignore)
+import Date exposing (Date, Month(..))
+import Date.Extra exposing (fromParts)
 import String
 
 
-type alias S3URL =
+type alias URL =
     { protocol : String
     , bucket : String
-    , path : String
+    , components : List String
     }
 
 
-type alias S3Size =
-    Int
+eol : Parser (List Char)
+eol =
+    Combine.many <|
+        Combine.choice
+            [ CChar.space
+            , CChar.tab
+            , CChar.eol
+            , ' ' <$ Combine.end
+            ]
 
 
-type Value
-    = Time String
-    | Size S3Size
-    | Filename S3URL
-
-
-whitespace : Parser Char
+whitespace : Parser (List Char)
 whitespace =
-    Combine.choice
-        [ CChar.space
-        , CChar.tab
-        , CChar.eol
-        ]
+    Combine.many <|
+        Combine.choice
+            [ CChar.space
+            , CChar.tab
+            , CChar.eol
+            ]
 
 
-s3url : Parser S3URL
-s3url =
+monthFromInt : Int -> Result (List String) Month
+monthFromInt month =
+    case month of
+        1 ->
+            Ok Jan
+
+        2 ->
+            Ok Feb
+
+        3 ->
+            Ok Mar
+
+        4 ->
+            Ok Apr
+
+        5 ->
+            Ok May
+
+        6 ->
+            Ok Jun
+
+        7 ->
+            Ok Jul
+
+        8 ->
+            Ok Aug
+
+        9 ->
+            Ok Sep
+
+        10 ->
+            Ok Oct
+
+        11 ->
+            Ok Nov
+
+        12 ->
+            Ok Dec
+
+        _ ->
+            Err [ "invalid month " ++ toString month ]
+
+
+leadingZero : Parser (Maybe Char)
+leadingZero =
+    Combine.maybe <| CChar.char '0'
+
+
+month : Parser Month
+month =
+    let
+        raw =
+            CNum.int
+
+        outer : Combine.Context -> ( Result (List String) Month, Combine.Context )
+        outer ctx =
+            case Combine.app raw ctx of
+                ( Ok res, after ) ->
+                    ( monthFromInt res, after )
+
+                ( Err err, after ) ->
+                    ( Err err, after )
+    in
+        Combine.primitive outer
+
+
+date : Parser Date
+date =
+    fromParts
+        <$> CNum.int
+        <* CChar.char '-'
+        <* leadingZero
+        <*> month
+        <* CChar.char '-'
+        <* leadingZero
+        <*> CNum.int
+        <* CChar.space
+        <* leadingZero
+        <*> CNum.int
+        <* CChar.char ':'
+        <* leadingZero
+        <*> CNum.int
+        <*> Combine.succeed 0
+        <*> Combine.succeed 0
+
+
+size : Parser Int
+size =
+    CNum.int
+
+
+url : Parser URL
+url =
     let
         protocol =
             Combine.while ((/=) ':')
 
-        bucket =
+        component =
             Combine.while ((/=) '/')
 
-        path =
-            Combine.many CChar.anyChar |> Combine.map String.fromList
+        slash =
+            CChar.char '/'
     in
-        start S3URL
-            |> consume protocol
-            |> ignore (Combine.string "://")
-            |> consume bucket
-            |> consume path
+        URL
+            <$> protocol
+            <* (Combine.string "://")
+            <*> component
+            <* slash
+            <*> Combine.sepBy1 slash component
