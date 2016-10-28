@@ -14,13 +14,20 @@ url =
     describe "url"
         [ test "parses a url" <|
             \() ->
-                let
-                    filename =
-                        "s3://blah/a/b/c"
-                in
-                    Expect.equal
-                        (Ok <| Manifest.URL "s3" "blah" [ "a", "b", "c" ])
-                        (Combine.parse Manifest.url filename |> fst)
+                "s3://converge-builds-dl/0.3.0-1-g9379a1d/converge_0.3.0-1-g9379a1d_darwin_386/converge.sha256sum"
+                    |> Combine.parse Manifest.url
+                    |> Expect.equal
+                        ( Ok <| Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge.sha256sum" ]
+                        , { input = "", position = 96 }
+                        )
+        , test "leaves trailing chars" <|
+            \() ->
+                "s3://converge-builds-dl/0.3.0-1-g9379a1d/converge_0.3.0-1-g9379a1d_darwin_386/converge.sha256sum extra"
+                    |> Combine.parse Manifest.url
+                    |> Expect.equal
+                        ( Ok <| Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge.sha256sum" ]
+                        , { input = " extra", position = 96 }
+                        )
         ]
 
 
@@ -63,7 +70,71 @@ date =
                     date
                         |> toFormattedString "yyyy-MM-dd HH:mm"
                         |> Combine.parse Manifest.date
-                        |> Expect.equal ( Ok date, { input = "", position = 16 } )
+                        |> Expect.equal
+                            ( Ok date
+                            , { input = "", position = 16 }
+                            )
+        ]
+
+
+line : Test
+line =
+    describe "line"
+        [ test "parses a line" <|
+            \() ->
+                "2016-10-27 16:09  10492296   s3://converge-builds-dl/0.3.0-1-g9379a1d/converge_0.3.0-1-g9379a1d_darwin_386/converge"
+                    |> Combine.parse Manifest.line
+                    |> Expect.equal
+                        ( Ok
+                            { time = fromParts 2016 Oct 27 16 9 0 0
+                            , size = 10492296
+                            , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge" ]
+                            }
+                        , { input = "", position = 115 }
+                        )
+        ]
+
+
+sampleLines : String
+sampleLines =
+    """2016-10-27 16:09  10492296   s3://converge-builds-dl/0.3.0-1-g9379a1d/converge_0.3.0-1-g9379a1d_darwin_386/converge
+2016-10-27 16:09        77   s3://converge-builds-dl/0.3.0-1-g9379a1d/converge_0.3.0-1-g9379a1d_darwin_386/converge.sha256sum
+"""
+
+
+lines : Test
+lines =
+    describe "lines"
+        [ test "parses a line" <|
+            \() ->
+                "2016-10-27 16:09  10492296   s3://converge-builds-dl/0.3.0-1-g9379a1d/converge_0.3.0-1-g9379a1d_darwin_386/converge"
+                    |> Combine.parse Manifest.lines
+                    |> Expect.equal
+                        ( Ok
+                            [ { time = fromParts 2016 Oct 27 16 9 0 0
+                              , size = 10492296
+                              , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge" ]
+                              }
+                            ]
+                        , { input = "", position = 115 }
+                        )
+        , test "parses lines" <|
+            \() ->
+                sampleLines
+                    |> Combine.parse Manifest.lines
+                    |> Expect.equal
+                        ( Ok
+                            [ { time = fromParts 2016 Oct 27 16 9 0 0
+                              , size = 10492296
+                              , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge" ]
+                              }
+                            , { time = fromParts 2016 Oct 27 16 9 0 0
+                              , size = 77
+                              , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge.sha256sum" ]
+                              }
+                            ]
+                        , { input = "", position = 242 }
+                        )
         ]
 
 
@@ -73,4 +144,6 @@ all =
         [ url
         , size
         , date
+        , line
+        , lines
         ]

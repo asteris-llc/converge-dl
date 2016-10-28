@@ -133,6 +133,9 @@ url =
         component =
             Combine.while ((/=) '/')
 
+        path =
+            Combine.regex "[\\w\\d\\-\\._/]+"
+
         slash =
             CChar.char '/'
     in
@@ -141,4 +144,26 @@ url =
             <* (Combine.string "://")
             <*> component
             <* slash
-            <*> Combine.sepBy1 slash component
+            <*> (String.split "/" <$> path)
+
+
+type alias Line =
+    { time : Date
+    , size : Int
+    , url : URL
+    }
+
+
+line : Parser Line
+line =
+    Line
+        <$> date
+        <* Combine.many CChar.space
+        <*> size
+        <* Combine.many CChar.space
+        <*> url
+
+
+lines : Parser (List Line)
+lines =
+    Combine.sepEndBy eol line
