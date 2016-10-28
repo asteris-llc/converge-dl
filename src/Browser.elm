@@ -1,23 +1,27 @@
 module Browser exposing (..)
 
 import Combine
+import Dict
 import Html exposing (Html)
+import Html.Attributes as Attr
+import Html.Events as Events
 import Http
 import Listing exposing (Listing)
 import Manifest
 import RemoteData exposing (RemoteData)
 import Result
+import String
 import Task
 import Task.Extra exposing (performFailproof)
 
 
+-- MODEL
+
+
 type alias Model =
-    RemoteData Err Listing
-
-
-init : ( Model, Cmd Msg )
-init =
-    RemoteData.NotAsked ! [ getListing ]
+    { path : List String
+    , data : RemoteData Err Listing
+    }
 
 
 type Err
@@ -25,15 +29,32 @@ type Err
     | ParseErr (List String)
 
 
+init : ( Model, Cmd Msg )
+init =
+    { path = [], data = RemoteData.Loading } ! [ getListing ]
+
+
+
+-- UPDATE
+
+
 type Msg
     = NewListing (RemoteData Err Listing)
+    | SetPath (List String)
+    | Reload
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewListing data ->
-            data ! []
+            { model | data = data } ! []
+
+        SetPath path ->
+            { model | path = path } ! []
+
+        Reload ->
+            { model | data = RemoteData.Loading } ! [ getListing ]
 
 
 getListing : Cmd Msg
@@ -55,6 +76,87 @@ getListing =
             |> performFailproof (RemoteData.fromResult >> NewListing)
 
 
+
+-- VIEW
+
+
 view : Model -> Html Msg
 view model =
-    model |> toString |> Html.text
+    Html.div
+        []
+        [ -- Reload button
+          Html.button
+            [ Events.onClick Reload
+            , Attr.class "reload"
+            ]
+            [ Html.text "Reload" ]
+          -- Segment to display the current path and navigate up
+        , Html.div
+            [ Events.onClick <| SetPath <| up model.path
+            , Attr.class "path"
+            ]
+            [ model.path |> String.join "/" |> Html.text ]
+          -- and finally the meat of our display: the files themselves!
+        , case model.data of
+            RemoteData.NotAsked ->
+                Html.div [ Attr.class "status" ] [ Html.text "no data" ]
+
+            RemoteData.Loading ->
+                Html.div [ Attr.class "status" ] [ Html.text "loading" ]
+
+            RemoteData.Failure err ->
+                Html.div
+                    [ Attr.class "status error" ]
+                    [ err |> toString |> Html.text ]
+
+            RemoteData.Success listing ->
+                case (Listing.select model.path listing) of
+                    Nothing ->
+                        Html.div
+                            [ Attr.class "status error" ]
+                            [ Html.text "Error: path not found" ]
+
+                    Just found ->
+                        listingView model found
+        ]
+
+
+listingView : Model -> Listing -> Html Msg
+listingView model listing =
+    Html.div
+        [ Attr.class "listing" ]
+        [ case listing of
+            Listing.File file ->
+                Html.div
+                    [ Attr.class "entry" ]
+                    [ file |> toString |> Html.text ]
+
+            Listing.Directory files ->
+                files
+                    |> Dict.keys
+                    |> List.map (entryView model.path)
+                    |> Html.ul [ Attr.class "entries" ]
+        ]
+
+
+entryView : List String -> String -> Html Msg
+entryView path name =
+    Html.li
+        [ Events.onClick <| SetPath <| path ++ [ name ]
+        , Attr.class "entry"
+        ]
+        [ Html.text name ]
+
+
+
+-- UTIL
+
+
+{-| up treats the input list as a path, and goes up by one level. So `up [1, 2] == [1]`
+-}
+up : List a -> List a
+up =
+    List.reverse
+        >> List.tail
+        >> Maybe.withDefault []
+        >> List.reverse
