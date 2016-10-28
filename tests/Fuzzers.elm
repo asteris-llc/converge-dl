@@ -1,4 +1,4 @@
-module Fuzzers exposing (date, manifestURL, manifestLine)
+module Fuzzers exposing (date)
 
 import Date exposing (Date, Month(Jan))
 import Date.Extra exposing (fromParts)
@@ -20,19 +20,3 @@ date =
         |> andMap_ (intRange 0 59)
         |> andMap_ (constant 0)
         |> andMap_ (constant 0)
-
-
-manifestURL : Fuzzer Manifest.URL
-manifestURL =
-    constant Manifest.URL
-        |> andMap_ string
-        |> andMap_ string
-        |> andMap_ (list string)
-
-
-manifestLine : Fuzzer Manifest.Line
-manifestLine =
-    constant Manifest.Line
-        |> andMap_ date
-        |> andMap_ int
-        |> andMap_ manifestURL
