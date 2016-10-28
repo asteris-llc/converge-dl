@@ -1,8 +1,14 @@
 module Main exposing (..)
 
-import Html exposing (..)
+import Browser
+import Html.App exposing (program)
 
 
-main : Html a
+main : Program Never
 main =
-    Html.text "test"
+    program
+        { init = Browser.init
+        , update = Browser.update
+        , view = Browser.view
+        , subscriptions = \_ -> Sub.none
+        }
