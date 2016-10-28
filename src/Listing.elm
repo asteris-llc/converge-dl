@@ -12,6 +12,11 @@ type Listing
     | File { time : Date, size : Int }
 
 
+empty : Listing
+empty =
+    Directory <| Dict.empty
+
+
 select : List String -> Listing -> Maybe Listing
 select path listing =
     case path of
@@ -66,7 +71,7 @@ fromManifest manifest =
                                     (insertAt
                                         listing
                                         parts
-                                        (Dict.get part dir |> Maybe.withDefault (Directory <| Dict.empty))
+                                        (Dict.get part dir |> Maybe.withDefault empty)
                                     )
                                 |> Directory
 
@@ -74,4 +79,4 @@ fromManifest manifest =
         combine line dir =
             insertAt (file line) (path line) dir
     in
-        List.foldl combine (Directory <| Dict.empty) manifest
+        List.foldl combine empty manifest
