@@ -80,16 +80,11 @@ monthFromInt month =
             Err [ "invalid month " ++ toString month ]
 
 
-leadingZero : Parser (Maybe Char)
-leadingZero =
-    Combine.maybe <| CChar.char '0'
-
-
 month : Parser Month
 month =
     let
         raw =
-            CNum.int
+            nDigits 2
 
         outer : Combine.Context -> ( Result (List String) Month, Combine.Context )
         outer ctx =
@@ -103,22 +98,23 @@ month =
         Combine.primitive outer
 
 
+nDigits : Int -> Parser Int
+nDigits n =
+    (String.concat >> String.toInt >> Result.withDefault 0) <$> Combine.count n (Combine.regex "\\d")
+
+
 date : Parser Date
 date =
     fromParts
-        <$> CNum.int
+        <$> nDigits 4
         <* CChar.char '-'
-        <* leadingZero
         <*> month
         <* CChar.char '-'
-        <* leadingZero
-        <*> CNum.int
+        <*> nDigits 2
         <* CChar.space
-        <* leadingZero
-        <*> CNum.int
+        <*> nDigits 2
         <* CChar.char ':'
-        <* leadingZero
-        <*> CNum.int
+        <*> nDigits 2
         <*> Combine.succeed 0
         <*> Combine.succeed 0
 
