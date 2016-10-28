@@ -5,6 +5,7 @@ import Date exposing (Month(..))
 import Date.Extra exposing (fromParts, toFormattedString)
 import Expect
 import Fuzz
+import Fuzzers
 import Manifest
 import Test exposing (..)
 
@@ -47,33 +48,15 @@ size =
 date : Test
 date =
     describe "date"
-        [ fuzz5
-            (Fuzz.intRange 1990 2016)
-            (Fuzz.map (Result.withDefault Jan) <| Fuzz.map Manifest.monthFromInt <| Fuzz.intRange 1 12)
-            (Fuzz.intRange 1 28)
-            (Fuzz.intRange 0 23)
-            (Fuzz.intRange 0 59)
-            "parses a date"
-          <|
-            \year month day hour minute ->
-                let
-                    date =
-                        fromParts
-                            year
-                            month
-                            day
-                            hour
-                            minute
-                            0
-                            0
-                in
-                    date
-                        |> toFormattedString "yyyy-MM-dd HH:mm"
-                        |> Combine.parse Manifest.date
-                        |> Expect.equal
-                            ( Ok date
-                            , { input = "", position = 16 }
-                            )
+        [ fuzz Fuzzers.date "parses a date" <|
+            \date ->
+                date
+                    |> toFormattedString "yyyy-MM-dd HH:mm"
+                    |> Combine.parse Manifest.date
+                    |> Expect.equal
+                        ( Ok date
+                        , { input = "", position = 16 }
+                        )
         ]
 
 
