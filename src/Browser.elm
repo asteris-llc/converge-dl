@@ -5,6 +5,7 @@ import Dict
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events as Events
+import Html.Shorthand as Html
 import Http
 import Listing exposing (Listing)
 import Manifest
@@ -82,8 +83,7 @@ getListing =
 
 view : Model -> Html Msg
 view model =
-    Html.div
-        []
+    Html.div_
         [ -- Reload button
           Html.button
             [ Events.onClick Reload
@@ -123,20 +123,25 @@ view model =
 
 listingView : Model -> Listing -> Html Msg
 listingView model listing =
-    Html.div
+    Html.table
         [ Attr.class "listing" ]
-        [ case listing of
-            Listing.File file ->
-                Html.div
-                    [ Attr.class "entry" ]
-                    [ file |> toString |> Html.text ]
+        [ Html.thead_
+            [ Html.tr_
+                [ Html.th_ [ Html.text "name" ]
+                , Html.th_ [ Html.text "size" ]
+                , Html.th_ [ Html.text "date modified" ]
+                ]
+            ]
+        , Html.tbody_ <|
+            case listing of
+                Listing.File _ ->
+                    [ entryView (model.path) listing ]
 
-            Listing.Directory files ->
-                files
-                    |> Dict.toList
-                    |> List.map (\( name, listing ) -> ( model.path ++ [ name ], listing ))
-                    |> List.map (uncurry entryView)
-                    |> Html.ul [ Attr.class "entries" ]
+                Listing.Directory files ->
+                    files
+                        |> Dict.toList
+                        |> List.map (\( name, listing ) -> ( model.path ++ [ name ], listing ))
+                        |> List.map (uncurry entryView)
         ]
 
 
@@ -145,33 +150,26 @@ entryView path listing =
     let
         name =
             path |> basename
-
-        class =
-            Attr.class "entry"
     in
-        case listing of
-            Listing.File meta ->
-                Html.li
-                    [ class ]
-                    [ Html.a
-                        [ Attr.href <| String.join "/" path
-                        , Attr.downloadAs name
+        Html.tr_ <|
+            case listing of
+                Listing.File meta ->
+                    [ Html.td_
+                        [ Html.a
+                            [ Attr.href <| String.join "/" path
+                            , Attr.downloadAs name
+                            ]
+                            [ Html.text name ]
                         ]
-                        [ name |> Html.text ]
-                    , " ("
-                        ++ (toString meta.size)
-                        ++ " bytes, modified "
-                        ++ (toString meta.time)
-                        ++ ")"
-                        |> Html.text
+                    , Html.td_ [ meta.size |> toString |> Html.text ]
+                    , Html.td_ [ meta.time |> toString |> Html.text ]
                     ]
 
-            Listing.Directory _ ->
-                Html.li
-                    [ Events.onClick <| SetPath path
-                    , class
+                Listing.Directory _ ->
+                    [ Html.td
+                        [ Events.onClick <| SetPath path ]
+                        [ Html.text name ]
                     ]
-                    [ name |> Html.text ]
 
 
 
