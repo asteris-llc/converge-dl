@@ -7,6 +7,8 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Shorthand as Html
 import Http
+import List
+import List.Extra as List
 import Listing exposing (Listing)
 import Manifest
 import RemoteData exposing (RemoteData)
@@ -91,11 +93,20 @@ view model =
             ]
             [ Html.text "Reload" ]
           -- Segment to display the current path and navigate up
-        , Html.div
-            [ Events.onClick <| SetPath <| up model.path
-            , Attr.class "path"
-            ]
-            [ model.path |> String.join "/" |> Html.text ]
+        , Html.ul
+            [ Attr.class "paths" ]
+            (model.path
+                |> List.inits
+                |> List.map
+                    (\path ->
+                        Html.span
+                            [ Attr.class "path"
+                            , Events.onClick <| SetPath path
+                            ]
+                            [ path |> List.last |> Maybe.withDefault "root" |> Html.text ]
+                    )
+                |> List.intersperse (Html.text " / ")
+            )
           -- and finally the meat of our display: the files themselves!
         , case model.data of
             RemoteData.NotAsked ->
