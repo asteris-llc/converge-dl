@@ -133,19 +133,45 @@ listingView model listing =
 
             Listing.Directory files ->
                 files
-                    |> Dict.keys
-                    |> List.map (entryView model.path)
+                    |> Dict.toList
+                    |> List.map (\( name, listing ) -> ( model.path ++ [ name ], listing ))
+                    |> List.map (uncurry entryView)
                     |> Html.ul [ Attr.class "entries" ]
         ]
 
 
-entryView : List String -> String -> Html Msg
-entryView path name =
-    Html.li
-        [ Events.onClick <| SetPath <| path ++ [ name ]
-        , Attr.class "entry"
-        ]
-        [ Html.text name ]
+entryView : List String -> Listing -> Html Msg
+entryView path listing =
+    let
+        name =
+            path |> basename
+
+        class =
+            Attr.class "entry"
+    in
+        case listing of
+            Listing.File meta ->
+                Html.li
+                    [ class ]
+                    [ Html.a
+                        [ Attr.href <| String.join "/" path
+                        , Attr.downloadAs name
+                        ]
+                        [ name |> Html.text ]
+                    , " ("
+                        ++ (toString meta.size)
+                        ++ " bytes, modified "
+                        ++ (toString meta.time)
+                        ++ ")"
+                        |> Html.text
+                    ]
+
+            Listing.Directory _ ->
+                Html.li
+                    [ Events.onClick <| SetPath path
+                    , class
+                    ]
+                    [ name |> Html.text ]
 
 
 
@@ -160,3 +186,10 @@ up =
         >> List.tail
         >> Maybe.withDefault []
         >> List.reverse
+
+
+basename : List String -> String
+basename =
+    List.reverse
+        >> List.head
+        >> Maybe.withDefault ""
