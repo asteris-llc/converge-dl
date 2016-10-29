@@ -160,7 +160,7 @@ entryView : List String -> Listing -> Html Msg
 entryView path listing =
     let
         name =
-            path |> basename
+            path |> List.last |> Maybe.withDefault ""
     in
         Html.tr_ <|
             case listing of
@@ -195,10 +195,3 @@ up =
         >> List.tail
         >> Maybe.withDefault []
         >> List.reverse
-
-
-basename : List String -> String
-basename =
-    List.reverse
-        >> List.head
-        >> Maybe.withDefault ""
