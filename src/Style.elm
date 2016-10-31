@@ -2,44 +2,62 @@ module Style exposing (..)
 
 import Css exposing (..)
 import Css.Elements exposing (body, li)
-import Css.Namespace exposing (namespace)
-
-
-type CssClasses
-    = NavBar
+import Css.Namespace as Namespace
 
 
 type CssIDs
-    = Page
+    = Wrapper
+    | NavPaths
+    | Status
+
+
+type CssClasses
+    = Error
+    | NavPath
 
 
 primaryAccentColor =
     hex "ccffaa"
 
 
+namespace =
+    "converge-dl"
+
+
+verticalRhythm =
+    em 1.5
+
+
 css =
-    (stylesheet << namespace "converge-dl")
+    (stylesheet << Namespace.namespace namespace)
         [ body
-            [ overflowX auto
-            , minWidth (px 1280)
-            ]
-        , (#) Page
-            [ backgroundColor (rgb 200 128 64)
-            , color (hex "CCFFFF")
-            , width (pct 100)
-            , height (pct 100)
-            , boxSizing borderBox
-            , padding (px 8)
-            , margin zero
-            ]
-        , (.) NavBar
             [ margin zero
             , padding zero
+            , border zero
+            , fontSize (pct 100)
+            , fontFamily inherit
+            , verticalAlign baseline
+            ]
+        , (#) Wrapper
+            [ maxWidth (px 1820)
+            , margin2 zero auto
+            ]
+        , (#) Status
+            [ lineHeight verticalRhythm
+            , border3 (px 1) solid primaryAccentColor
+            , padding2 zero verticalRhythm
             , children
-                [ li
-                    [ (display inlineBlock) |> important
-                    , color primaryAccentColor
-                    ]
+                [ (.) Error
+                    [ border3 (px 1) solid (rgb 255 0 0) ]
+                ]
+            ]
+        , (#) NavPaths
+            [ lineHeight verticalRhythm
+            , border3 (px 1) solid (rgb 0 0 0)
+            , padding2 zero verticalRhythm
+            , children
+                [ (.) NavPath
+                    [ textDecoration underline ]
                 ]
             ]
         ]

@@ -4,6 +4,7 @@ import Combine
 import Dict
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.CssHelpers
 import Html.Events as Events
 import Html.Shorthand as Html
 import Http
@@ -14,8 +15,14 @@ import Manifest
 import RemoteData exposing (RemoteData)
 import Result
 import String
+import Style
 import Task
 import Task.Extra exposing (performFailproof)
+
+
+{ id, class, classList } =
+    Html.CssHelpers.withNamespace Style.namespace
+
 
 
 -- MODEL
@@ -85,7 +92,8 @@ getListing =
 
 view : Model -> Html Msg
 view model =
-    Html.div_
+    Html.div
+        [ id [ Style.Wrapper ] ]
         [ -- Reload button
           Html.button
             [ Events.onClick Reload
@@ -94,13 +102,13 @@ view model =
             [ Html.text "Reload" ]
           -- Segment to display the current path and navigate up
         , Html.ul
-            [ Attr.class "paths" ]
+            [ id [ Style.NavPaths ] ]
             (model.path
                 |> List.inits
                 |> List.map
                     (\path ->
                         Html.span
-                            [ Attr.class "path"
+                            [ class [ Style.NavPath ]
                             , Events.onClick <| SetPath path
                             ]
                             [ path |> List.last |> Maybe.withDefault "root" |> Html.text ]
@@ -110,21 +118,25 @@ view model =
           -- and finally the meat of our display: the files themselves!
         , case model.data of
             RemoteData.NotAsked ->
-                Html.div [ Attr.class "status" ] [ Html.text "no data" ]
+                Html.div [ id [ Style.Status ] ] [ Html.text "no data" ]
 
             RemoteData.Loading ->
-                Html.div [ Attr.class "status" ] [ Html.text "loading" ]
+                Html.div [ id [ Style.Status ] ] [ Html.text "loading" ]
 
             RemoteData.Failure err ->
                 Html.div
-                    [ Attr.class "status error" ]
+                    [ id [ Style.Status ]
+                    , class [ Style.Error ]
+                    ]
                     [ err |> toString |> Html.text ]
 
             RemoteData.Success listing ->
                 case (Listing.select model.path listing) of
                     Nothing ->
                         Html.div
-                            [ Attr.class "status error" ]
+                            [ class [ Style.Status ]
+                            , id [ Style.Error ]
+                            ]
                             [ Html.text "Error: path not found" ]
 
                     Just found ->
