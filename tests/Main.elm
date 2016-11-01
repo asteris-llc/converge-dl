@@ -3,6 +3,7 @@ port module Main exposing (..)
 import Json.Encode exposing (Value)
 import ListingTests
 import ManifestTests
+import SizeTests
 import Test exposing (concat)
 import Test.Runner.Node exposing (run)
 
@@ -13,6 +14,7 @@ main =
         concat
             [ ManifestTests.all
             , ListingTests.all
+            , SizeTests.all
             ]
 
 

@@ -14,3 +14,8 @@ build/styles.css: build ${ELM_SRC} elm-package.json
 
 manifest.txt:
 	s3cmd ls --recursive s3://converge-builds-dl/ > manifest.txt
+
+test:
+	elm-test
+
+.PHONY: test
