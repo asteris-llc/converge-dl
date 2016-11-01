@@ -14,6 +14,7 @@ import Listing exposing (Listing)
 import Manifest
 import RemoteData exposing (RemoteData)
 import Result
+import Size
 import String
 import Style
 import Task
@@ -202,7 +203,7 @@ entryView path listing =
                 Listing.File meta ->
                     let
                         size =
-                            meta.size |> toString
+                            meta.size |> Size.toString
 
                         time =
                             meta.time |> Date.toIsoString

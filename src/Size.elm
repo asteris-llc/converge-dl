@@ -39,13 +39,19 @@ rebucket =
 toString : Unit -> String
 toString unit =
     let
-        unitize : String -> number -> String
+        unitize : String -> Float -> String
         unitize unit amt =
-            (amt |> Basics.toString) ++ unit
+            amt
+                |> (*) 100
+                |> ceiling
+                |> toFloat
+                |> (flip (/)) 100
+                |> Basics.toString
+                |> (flip (++)) unit
     in
         case unit of
             Bytes n ->
-                unitize "B" n
+                n |> toFloat |> unitize "B"
 
             Kilobytes n ->
                 unitize "KB" n
