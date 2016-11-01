@@ -5,8 +5,8 @@ import Basics
 
 type Unit
     = Bytes Int
+    | Kilobytes Float
     | Megabytes Float
-    | Gigabytes Float
 
 
 rebucket : Unit -> Unit
@@ -18,10 +18,10 @@ rebucket =
                 Bytes n ->
                     toFloat n
 
-                Megabytes n ->
+                Kilobytes n ->
                     n * 1024
 
-                Gigabytes n ->
+                Megabytes n ->
                     n * 1024 ^ 2
 
         rewrap : Float -> Unit
@@ -29,21 +29,26 @@ rebucket =
             if unwrapped < 1024 then
                 Bytes unwrapped
             else if unwrapped < 1024 ^ 2 then
-                unwrapped |> (flip (/)) 1024 |> Megabytes
+                unwrapped |> (flip (/)) 1024 |> Kilobytes
             else
-                unwrapped |> (flip (/)) (1024 ^ 2) |> Gigabytes
+                unwrapped |> (flip (/)) (1024 ^ 2) |> Megabytes
     in
         unwrap >> rewrap
 
 
 toString : Unit -> String
 toString unit =
-    case unit of
-        Bytes n ->
-            n |> Basics.toString |> (++) "B"
+    let
+        unitize : String -> number -> String
+        unitize unit amt =
+            (amt |> Basics.toString) ++ unit
+    in
+        case unit of
+            Bytes n ->
+                unitize "B" n
 
-        Megabytes n ->
-            n |> Basics.toString |> (++) "MB"
+            Kilobytes n ->
+                unitize "KB" n
 
-        Gigabytes n ->
-            n |> Basics.toString |> (++) "GB"
+            Megabytes n ->
+                unitize "MB" n
