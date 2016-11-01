@@ -5,7 +5,7 @@ import Combine.Char as CChar
 import Combine.Infix exposing ((<*>), (<*), (*>), (<$>), (<$), (<?>))
 import Combine.Num as CNum
 import Date exposing (Date, Month(..))
-import Date.Extra exposing (fromParts)
+import Date.Extra as Date
 import String
 
 
@@ -105,7 +105,7 @@ nDigits n =
 
 date : Parser Date
 date =
-    fromParts
+    Date.fromParts
         <$> nDigits 4
         <* CChar.char '-'
         <*> month
