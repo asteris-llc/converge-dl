@@ -5,11 +5,12 @@ import Dict exposing (Dict)
 import List
 import Manifest
 import Maybe
+import Size
 
 
 type Listing
     = Directory (Dict String Listing)
-    | File { time : Date, size : Int }
+    | File { time : Date, size : Size.Unit }
 
 
 empty : Listing

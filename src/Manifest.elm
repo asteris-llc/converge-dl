@@ -6,6 +6,7 @@ import Combine.Infix exposing ((<*>), (<*), (*>), (<$>), (<$), (<?>))
 import Combine.Num as CNum
 import Date exposing (Date, Month(..))
 import Date.Extra as Date
+import Size
 import String
 
 
@@ -119,9 +120,9 @@ date =
         <*> Combine.succeed 0
 
 
-size : Parser Int
+size : Parser Size.Unit
 size =
-    CNum.int
+    (Size.Bytes >> Size.rebucket) <$> CNum.int
 
 
 url : Parser URL
@@ -149,7 +150,7 @@ url =
 
 type alias Line =
     { time : Date
-    , size : Int
+    , size : Size.Unit
     , url : URL
     }
 

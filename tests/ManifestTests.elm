@@ -7,6 +7,7 @@ import Expect
 import Fuzz
 import Fuzzers
 import Manifest
+import Size
 import Test exposing (..)
 
 
@@ -41,7 +42,7 @@ size =
                     |> toString
                     |> Combine.parse Manifest.size
                     |> fst
-                    |> Expect.equal (Ok i)
+                    |> Expect.equal (Ok (Size.Bytes i |> Size.rebucket))
         ]
 
 
@@ -70,7 +71,7 @@ line =
                     |> Expect.equal
                         ( Ok
                             { time = fromParts 2016 Oct 27 16 9 0 0
-                            , size = 10492296
+                            , size = Size.Bytes 10492296 |> Size.rebucket
                             , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge" ]
                             }
                         , { input = "", position = 115 }
@@ -95,7 +96,7 @@ lines =
                     |> Expect.equal
                         ( Ok
                             [ { time = fromParts 2016 Oct 27 16 9 0 0
-                              , size = 10492296
+                              , size = Size.Bytes 10492296 |> Size.rebucket
                               , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge" ]
                               }
                             ]
@@ -108,11 +109,11 @@ lines =
                     |> Expect.equal
                         ( Ok
                             [ { time = fromParts 2016 Oct 27 16 9 0 0
-                              , size = 10492296
+                              , size = Size.Bytes 10492296 |> Size.rebucket
                               , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge" ]
                               }
                             , { time = fromParts 2016 Oct 27 16 9 0 0
-                              , size = 77
+                              , size = Size.Bytes 77 |> Size.rebucket
                               , url = Manifest.URL "s3" "converge-builds-dl" [ "0.3.0-1-g9379a1d", "converge_0.3.0-1-g9379a1d_darwin_386", "converge.sha256sum" ]
                               }
                             ]

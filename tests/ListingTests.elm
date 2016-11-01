@@ -7,6 +7,7 @@ import Expect
 import Fuzz
 import Listing
 import Manifest
+import Size
 import Test exposing (..)
 
 
@@ -15,9 +16,9 @@ baseTime =
     fromParts 2016 Jan 1 0 0 0 0
 
 
-baseSize : Int
+baseSize : Size.Unit
 baseSize =
-    0
+    Size.Bytes 0
 
 
 baseListing : Listing.Listing

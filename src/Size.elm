@@ -1,5 +1,7 @@
 module Size exposing (..)
 
+import Basics
+
 
 type Unit
     = Bytes Int
@@ -32,3 +34,16 @@ rebucket =
                 unwrapped |> (flip (/)) (1024 ^ 2) |> Gigabytes
     in
         unwrap >> rewrap
+
+
+toString : Unit -> String
+toString unit =
+    case unit of
+        Bytes n ->
+            n |> Basics.toString |> (++) "B"
+
+        Megabytes n ->
+            n |> Basics.toString |> (++) "MB"
+
+        Gigabytes n ->
+            n |> Basics.toString |> (++) "GB"
