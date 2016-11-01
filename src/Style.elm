@@ -1,14 +1,20 @@
 module Style exposing (..)
 
 import Css exposing (..)
-import Css.Elements exposing (body, li)
+import Css.Elements exposing (body, thead, tbody, td, tr, th)
 import Css.Namespace as Namespace
+import Html.CssHelpers
+import String
 
 
 type CssIDs
     = Wrapper
     | NavPaths
     | Status
+    | Logo
+    | Controls
+    | Reload
+    | Listing
 
 
 type CssClasses
@@ -16,48 +22,158 @@ type CssClasses
     | NavPath
 
 
-primaryAccentColor =
-    hex "ccffaa"
-
-
 namespace =
     "converge-dl"
 
 
+{ id, class, classList } =
+    Html.CssHelpers.withNamespace namespace
+
+
+
+-- THEME
+
+
+type alias Theme =
+    { base : Color
+    , text : Color
+    , box :
+        { background : Color
+        }
+    , listing :
+        { divider : Color
+        , header : Color
+        }
+    }
+
+
+baseFontSize =
+    px 18
+
+
+baseBorderRadius =
+    px 4
+
+
 verticalRhythm =
-    em 1.5
+    px 25
 
 
-css =
-    (stylesheet << Namespace.namespace namespace)
+theme : Theme
+theme =
+    let
+        gray =
+            \level -> rgb level level level
+
+        white =
+            gray 255
+
+        blackish =
+            gray 74
+
+        lightish =
+            gray 129
+    in
+        { base = gray 248
+        , text = blackish
+        , box =
+            { background = white
+            }
+        , listing =
+            { divider = gray 221
+            , header = lightish
+            }
+        }
+
+
+
+-- STYLES
+
+
+style : Theme -> List Snippet
+style theme =
+    let
+        box =
+            mixin
+                [ borderRadius baseBorderRadius
+                , backgroundColor theme.box.background
+                , property "box-shadow" "1px 1px 2px 0px rgba(0,0,0,0.50)"
+                , border zero
+                ]
+
+        fixMath : { a | value : String } -> { a | value : String }
+        fixMath v =
+            { v | value = v.value |> String.filter ((/=) ' ') }
+    in
         [ body
-            [ margin zero
-            , padding zero
-            , border zero
-            , fontSize (pct 100)
-            , fontFamily inherit
-            , verticalAlign baseline
+            [ fontSize baseFontSize
+            , backgroundColor theme.base
+            , color theme.text
             ]
         , (#) Wrapper
-            [ maxWidth (px 1820)
+            [ maxWidth (px 1024)
             , margin2 zero auto
             ]
-        , (#) Status
-            [ lineHeight verticalRhythm
-            , border3 (px 1) solid primaryAccentColor
-            , padding2 zero verticalRhythm
+        , (#) Logo
+            [ fontSize baseFontSize
+            , fontWeight (int 500)
+            ]
+        , (#) Controls
+            [ displayFlex
+            , flexDirection row
+            , property "justify-content" "space-between"
+            , alignItems center
+            , height (px 50)
             , children
-                [ (.) Error
-                    [ border3 (px 1) solid (rgb 255 0 0) ]
+                [ (#) NavPaths
+                    [ children
+                        [ (.) NavPath [ textDecoration underline ] ]
+                    ]
+                , (#) Reload
+                    [ padding2 zero (verticalRhythm |/| (px 2) |> fixMath)
+                    , lineHeight (verticalRhythm |*| (px 1.7) |> fixMath)
+                    , box
+                    ]
                 ]
             ]
-        , (#) NavPaths
-            [ lineHeight verticalRhythm
-            , border3 (px 1) solid (rgb 0 0 0)
-            , padding2 zero verticalRhythm
+        , (#) Listing
+            [ box
+            , width (pct 100)
+            , marginTop (verticalRhythm |/| (px 2) |> fixMath)
             , children
-                [ (.) NavPath
-                    [ textDecoration underline ]
+                [ thead
+                    [ descendants
+                        [ th
+                            [ textAlign left
+                            , color theme.listing.header
+                            , fontWeight (int 500)
+                            , textTransform capitalize
+                            ]
+                        ]
+                    ]
+                ]
+            , descendants
+                [ tr
+                    [ lineHeight (verticalRhythm |*| (px 2) |> fixMath)
+                    , children <|
+                        List.map
+                            (\el ->
+                                el
+                                    [ borderBottom3 (px 1) solid theme.listing.divider
+                                    , property "border-collapse" "collapse"
+                                    , firstChild [ paddingLeft verticalRhythm ]
+                                    , lastChild [ paddingRight verticalRhythm ]
+                                    ]
+                            )
+                            [ td, th ]
+                    , lastChild [ children [ td [ border zero ] ] ]
+                    ]
                 ]
             ]
         ]
+
+
+css =
+    style theme
+        |> Namespace.namespace namespace
+        |> stylesheet

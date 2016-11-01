@@ -1,10 +1,10 @@
 module Browser exposing (..)
 
 import Combine
+import Date.Extra as Date
 import Dict
 import Html exposing (Html)
 import Html.Attributes as Attr
-import Html.CssHelpers
 import Html.Events as Events
 import Html.Shorthand as Html
 import Http
@@ -18,11 +18,6 @@ import String
 import Style
 import Task
 import Task.Extra exposing (performFailproof)
-
-
-{ id, class, classList } =
-    Html.CssHelpers.withNamespace Style.namespace
-
 
 
 -- MODEL
@@ -93,40 +88,20 @@ getListing =
 view : Model -> Html Msg
 view model =
     Html.div
-        [ id [ Style.Wrapper ] ]
-        [ -- Reload button
-          Html.button
-            [ Events.onClick Reload
-            , Attr.class "reload"
-            ]
-            [ Html.text "Reload" ]
-          -- Segment to display the current path and navigate up
-        , Html.ul
-            [ id [ Style.NavPaths ] ]
-            (model.path
-                |> List.inits
-                |> List.map
-                    (\path ->
-                        Html.span
-                            [ class [ Style.NavPath ]
-                            , Events.onClick <| SetPath path
-                            ]
-                            [ path |> List.last |> Maybe.withDefault "root" |> Html.text ]
-                    )
-                |> List.intersperse (Html.text " / ")
-            )
-          -- and finally the meat of our display: the files themselves!
+        [ Style.id [ Style.Wrapper ] ]
+        [ logoView
+        , controlsView model
         , case model.data of
             RemoteData.NotAsked ->
-                Html.div [ id [ Style.Status ] ] [ Html.text "no data" ]
+                Html.div [ Style.id [ Style.Status ] ] [ Html.text "no data" ]
 
             RemoteData.Loading ->
-                Html.div [ id [ Style.Status ] ] [ Html.text "loading" ]
+                Html.div [ Style.id [ Style.Status ] ] [ Html.text "loading" ]
 
             RemoteData.Failure err ->
                 Html.div
-                    [ id [ Style.Status ]
-                    , class [ Style.Error ]
+                    [ Style.id [ Style.Status ]
+                    , Style.class [ Style.Error ]
                     ]
                     [ err |> toString |> Html.text ]
 
@@ -134,8 +109,8 @@ view model =
                 case (Listing.select model.path listing) of
                     Nothing ->
                         Html.div
-                            [ class [ Style.Status ]
-                            , id [ Style.Error ]
+                            [ Style.class [ Style.Status ]
+                            , Style.id [ Style.Error ]
                             ]
                             [ Html.text "Error: path not found" ]
 
@@ -144,10 +119,58 @@ view model =
         ]
 
 
+logoView : Html Msg
+logoView =
+    Html.h1
+        [ Style.id [ Style.Logo ] ]
+        [ Html.text "Converge" ]
+
+
+controlsView : Model -> Html Msg
+controlsView model =
+    let
+        segment : List String -> Html Msg
+        segment =
+            \path ->
+                Html.span
+                    [ Style.class [ Style.NavPath ]
+                    , Events.onClick <| SetPath path
+                    ]
+                    [ path
+                        |> List.last
+                        |> Maybe.withDefault "root"
+                        |> Html.text
+                    ]
+
+        -- display the current path and navigate up
+        segments : Html Msg
+        segments =
+            Html.div
+                [ Style.id [ Style.NavPaths ] ]
+                (model.path
+                    |> List.inits
+                    |> List.map segment
+                    |> List.intersperse (Html.text " / ")
+                )
+
+        -- button to reload the current view
+        reload : Html Msg
+        reload =
+            Html.button
+                [ Events.onClick Reload
+                , Style.id [ Style.Reload ]
+                ]
+                [ Html.text "Reload" ]
+    in
+        Html.div
+            [ Style.id [ Style.Controls ] ]
+            [ segments, reload ]
+
+
 listingView : Model -> Listing -> Html Msg
 listingView model listing =
     Html.table
-        [ Attr.class "listing" ]
+        [ Style.id [ Style.Listing ] ]
         [ Html.thead_
             [ Html.tr_
                 [ Html.th_ [ Html.text "name" ]
@@ -177,20 +200,29 @@ entryView path listing =
         Html.tr_ <|
             case listing of
                 Listing.File meta ->
-                    [ Html.td_
-                        [ Html.a
-                            [ Attr.href <| String.join "/" path
-                            , Attr.downloadAs name
+                    let
+                        size =
+                            meta.size |> toString
+
+                        time =
+                            meta.time |> Date.toIsoString
+                    in
+                        [ Html.td_
+                            [ Html.a
+                                [ Attr.href <| String.join "/" path
+                                , Attr.downloadAs name
+                                ]
+                                [ Html.text name ]
                             ]
-                            [ Html.text name ]
+                        , Html.td_ [ size |> Html.text ]
+                        , Html.td_ [ time |> Html.text ]
                         ]
-                    , Html.td_ [ meta.size |> toString |> Html.text ]
-                    , Html.td_ [ meta.time |> toString |> Html.text ]
-                    ]
 
                 Listing.Directory _ ->
                     [ Html.td
-                        [ Events.onClick <| SetPath path ]
+                        [ Events.onClick <| SetPath path
+                        , Attr.colspan 3
+                        ]
                         [ Html.text name ]
                     ]
 
