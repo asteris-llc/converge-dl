@@ -23,7 +23,7 @@ install:
       cd ..;
     fi
 
-  - npm install -g elm@0.17.1 elm-css@0.4.0 elm-test@0.17.3
+  - npm install -g elm@0.17.1 elm-css@0.6.0 elm-test@0.17.3
   - git clone https://github.com/NoRedInk/elm-ops-tooling
   - elm-ops-tooling/with_retry.rb elm package install --yes
 
