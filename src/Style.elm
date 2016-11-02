@@ -22,6 +22,7 @@ type CssClasses
     | NavPath
 
 
+namespace : String
 namespace =
     "converge-dl"
 
@@ -47,14 +48,17 @@ type alias Theme =
     }
 
 
+baseFontSize : Px
 baseFontSize =
     px 18
 
 
+baseBorderRadius : Px
 baseBorderRadius =
     px 4
 
 
+verticalRhythm : Px
 verticalRhythm =
     px 25
 
@@ -173,6 +177,7 @@ style theme =
         ]
 
 
+css : Stylesheet
 css =
     style theme
         |> Namespace.namespace namespace
